@@ -1,0 +1,57 @@
+function aircraft = calc_planform(b2,c_root,c_tip,twist_tip,v_inf,alpha)
+	%{
+	UPDATED TO JONAS
+    %}
+
+%% -------------------------------
+%  1. Constant Angles Definitons (deg)
+LE_sweep   = 5;
+dihedral   = 5;
+root_incidence = 0;
+
+%% -------------------------------
+%  2. Spanwise stations
+y_root = 0;
+y_tip  = b2;
+
+%% -------------------------------
+%  3. Leading-edge x-positions
+x_le_root = 0;
+x_le_tip  =  y_tip * tand(LE_sweep);
+
+%% -------------------------------
+%  4. Trailing-edge x-positions
+% Root TE
+x_te_root = x_le_root + c_root;
+
+% Outboard TE implied by tip chord
+x_te_tip = x_le_tip + c_tip*cosd(twist_tip);
+
+%% -------------------------------
+%  6. Dihedral (z positions)
+% -------------------------------
+z_root = 0;
+z_tip  = y_tip * tan(dihedral);
+
+%% -------------------------------
+%  7. Assemble wing_geom matrix
+% Format: [x_le, y_le, z_le, chord, twist]
+% -------------------------------
+aircraft.wing_geom = [
+    x_le_root, y_root, z_root, c_root, root_incidence;  % Root
+    x_le_tip,  y_tip,  z_tip,  c_tip,  twist_tip    % Tip
+];
+
+%% -------------------------------
+%  8. Wing reference area (half + full)
+aircraft.S_ref_half = (c_root + c_tip) / 2 * b2; % A = (c_root + c_tip)/2 * span
+aircraft.S_ref      = 2 * aircraft.S_ref_half;
+
+%% -------------------------------
+%  9. Full span
+aircraft.b = 2 * aircraft.b2;
+
+%% -------------------------------
+%  10. Airf
+
+end

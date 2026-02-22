@@ -1,0 +1,23 @@
+function [LD,stress_crit,L] = run_solver(x)
+    c = constants();
+    b2 = x(1);
+    c_root = x(2);
+    c_tip = x(3);
+    twist_tip = x(4);
+    v_inf = x(5);
+    alpha = x(6);
+
+    aircraft = calc_planform(b2,c_root,c_tip,twist_tip);
+    [a, rho, v, mach, mu] = calc_atmos_properties(c.altitude,v_inf,'v');
+    Re = rho*v*aircraft.MAC / mu;
+    
+    aer
+
+
+
+
+
+
+
+
+end
