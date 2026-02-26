@@ -5,9 +5,9 @@ function aircraft = calc_planform(b2,c_root,c_tip,twist_tip)
 
 %% -------------------------------
 %  1. Constant Angles Definitons (deg)
-LE_sweep   = 5;
-dihedral   = 5;
-root_incidence = 0;
+aircraft.LE_sweep   = 5;
+aircraft.dihedral   = 5;
+aircraft.root_incidence = 0;
 
 %% -------------------------------
 %  2. Spanwise stations
@@ -44,14 +44,17 @@ aircraft.wing_geom = [
 
 %% -------------------------------
 %  8. Wing reference area (half + full)
-aircraft.S_ref_half = (c_root + c_tip) / 2 * b2; % A = (c_root + c_tip)/2 * span
-aircraft.S_ref      = 2 * aircraft.S_ref_half;
+aircraft.S_half = (c_root + c_tip) / 2 * b2; % A = (c_root + c_tip)/2 * span
+aircraft.S      = 2 * aircraft.S_ref_half;
 
 %% -------------------------------
 %  9. Full span and Mean Aerodynamic Chord
 aircraft.b = 2 * aircraft.b2;
 % Taper ratio
-lambda = c_tip / c_root;
+aircraft.lambda = c_tip / c_root;
+
+aircraft.AR = (aircraft.b^2) / aircraft.S;
+
 % MAC length
 aircraft.MAC = (2/3) * c_root * ((1 + lambda + lambda^2) / (1 + lambda));
 

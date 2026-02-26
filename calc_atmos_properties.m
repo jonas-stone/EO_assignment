@@ -1,4 +1,4 @@
-function [a, rho, v, mach, mu] = calc_atmos_properties(h, speed_val, inputType)
+function [a, rho, v, mach, mu] = calc_atmos_properties(h, speed_val, inputType, L)
     %{
     %% CALC ATMOS PROEPRTIES FUNCTION
     
@@ -71,5 +71,19 @@ function [a, rho, v, mach, mu] = calc_atmos_properties(h, speed_val, inputType)
         otherwise
             error('Invalid inputType. Use ''Mach'' or ''v''.');
     end	   
+
+    % Export to the aero struct
+
+    Re = rho*v*aircraft.MAC / mu;
+    aero.V = v;
+    aero.rho = rho;
+    aero.alt = c.altitude;
+    aero.Re = Re;
+    aero.M = mach;
+    aero.CL = L/(1/2*rho*v^2*aircraft.S_ref);
+
+
+
+
 end
 

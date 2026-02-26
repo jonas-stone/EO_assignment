@@ -1,4 +1,4 @@
-function [Res, LD, L] = Q3D_Start_mod(aircraft,aero)
+function [Res] = Q3D_Start_mod(aircraft,aero)
 
 % Wing planform geometry 
 %                x    y     z   chord(m)    twist angle (deg) 
