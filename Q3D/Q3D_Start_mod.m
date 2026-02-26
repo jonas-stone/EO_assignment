@@ -1,4 +1,6 @@
-function [Res] = Q3D_Start_mod(aircraft,aero)
+function [Res, LD] = Q3D_Start_mod(aircraft,aero)
+
+cd("Q3D\");
 
 % Wing planform geometry 
 %                x    y     z   chord(m)    twist angle (deg) 
@@ -23,10 +25,16 @@ AC.Aero.rho   = aero.rho;       % air density  (kg/m3)
 AC.Aero.alt   = aero.alt;       % flight altitude (m)
 AC.Aero.Re    = aero.Re;        % reynolds number (bqased on mean aerodynamic chord)
 AC.Aero.M     = aero.M;         % flight Mach number 
-AC.Aero.Alpha = aero.Alpha;     % angle of attack -  comment this line to run the code for given cl 
+AC.Aero.CL    = aero.CL;     % angle of attack -  comment this line to run the code for given cl 
+% AC.Aero.Alpha = aero.Alpha;     % angle of attack -  comment this line to run the code for given cl 
 
 %% 
 tic
 Res = Q3D_solver(AC);
 toc
+
+LD = Res.CLwing/Res.CDwing;
+
+cd("..\");
+
 end

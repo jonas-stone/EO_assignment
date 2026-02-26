@@ -12,13 +12,13 @@ function [LD,stress_crit,L] = run_solver(x)
 
     % Aircraft Weight Estimation
     [W_total,W_wing] = estimate_weight(aircraft);
-    L = W;
+    L = W_total;
 
     % Calculation of Flight Conditions
-    [aero] = calc_atmos_properties(c.altitude,v_inf,'v',L);
+    [aero] = calc_atmos_properties(c.altitude,v_inf,'v',L,aircraft);
 
     % Aerodynamic Solver Run
-    [Res] = Q3D_Start_mod(aircraft,aero);
+    [Res, LD] = Q3D_Start_mod(aircraft,aero);
 
     % Structural Solver Run
     [stress_crit] = structural_solver(aircraft,Res,W_total,W_wing);

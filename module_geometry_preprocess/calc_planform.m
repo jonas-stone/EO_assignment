@@ -2,50 +2,45 @@ function aircraft = calc_planform(b2,c_root,c_tip,twist_tip)
 	%{
 	UPDATED TO JONAS
     %}
-
+aircraft.b2 = b2;
+aircraft.c_root = c_root;
+aircraft.c_tip = c_tip;
+aircraft.twist_tip = twist_tip;
 %% -------------------------------
-%  1. Constant Angles Definitons (deg)
+%  Constant Angles Definitons (deg)
 aircraft.LE_sweep   = 5;
 aircraft.dihedral   = 5;
 aircraft.root_incidence = 0;
 
 %% -------------------------------
-%  2. Spanwise stations
+%  Spanwise stations
 y_root = 0;
-y_tip  = b2;
+y_tip  = aircraft.b2;
 
 %% -------------------------------
-%  3. Leading-edge x-positions
+%  Leading-edge x-positions
 x_le_root = 0;
-x_le_tip  =  y_tip * tand(LE_sweep);
+x_le_tip  =  y_tip * tand(aircraft.LE_sweep);
 
 %% -------------------------------
-%  4. Trailing-edge x-positions
-% Root TE
-x_te_root = x_le_root + c_root;
-
-% Outboard TE implied by tip chord
-x_te_tip = x_le_tip + c_tip*cosd(twist_tip);
-
-%% -------------------------------
-%  6. Dihedral (z positions)
+%  Dihedral (z positions)
 % -------------------------------
 z_root = 0;
-z_tip  = y_tip * tan(dihedral);
+z_tip  = y_tip * tand(aircraft.dihedral);
 
 %% -------------------------------
-%  7. Assemble wing_geom matrix
+%  Assemble wing_geom matrix
 % Format: [x_le, y_le, z_le, chord, twist]
 % -------------------------------
 aircraft.wing_geom = [
-    x_le_root, y_root, z_root, c_root, root_incidence;  % Root
-    x_le_tip,  y_tip,  z_tip,  c_tip,  twist_tip    % Tip
+    x_le_root, y_root, z_root, c_root, aircraft.root_incidence;  % Root
+    x_le_tip,  y_tip,  z_tip,  c_tip,  aircraft.twist_tip    % Tip
 ];
 
 %% -------------------------------
 %  8. Wing reference area (half + full)
-aircraft.S_half = (c_root + c_tip) / 2 * b2; % A = (c_root + c_tip)/2 * span
-aircraft.S      = 2 * aircraft.S_ref_half;
+aircraft.S_half = (c_root + c_tip) / 2 * aircraft.b2; % A = (c_root + c_tip)/2 * span
+aircraft.S      = 2 * aircraft.S_half;
 
 %% -------------------------------
 %  9. Full span and Mean Aerodynamic Chord
@@ -56,7 +51,7 @@ aircraft.lambda = c_tip / c_root;
 aircraft.AR = (aircraft.b^2) / aircraft.S;
 
 % MAC length
-aircraft.MAC = (2/3) * c_root * ((1 + lambda + lambda^2) / (1 + lambda));
+aircraft.MAC = (2/3) * c_root * ((1 + aircraft.lambda + aircraft.lambda^2) / (1 + aircraft.lambda));
 
 %% -------------------------------
 %  10. Airfoil Definition

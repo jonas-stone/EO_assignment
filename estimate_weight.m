@@ -18,7 +18,7 @@ function [W_total, W_wing] = estimate_weight(aircraft)
     lambda = aircraft.lambda;
 
     % Calculate the sweep angle in radians, then take the cosine
-    cos_Lambda = cos(aircraft.LE_sweep);
+    cos_Lambda = cosd(aircraft.LE_sweep);
     
     % Convert to Imperial Units (Raymer's equations require lbs and ft^2)
     S_sqft = aircraft.S * 10.7639;
@@ -30,11 +30,11 @@ function [W_total, W_wing] = estimate_weight(aircraft)
     
     % Raymer Exponents (Representative for light aircraft/sailplanes)
     e_1 = 0.360;   % Area exponent
-    e_2 = 1.712;   % Aspect Ratio exponent
+    e_2 = 0.712;   % Aspect Ratio exponent
     e_3 = 0.397;   % Load factor exponent
     e_4 = -0.04;   % Taper ratio exponent
     e_5 = -1.0;    % Sweep exponent (swept wings are heavier to resist torsion)
-    K   = 0.04674; % Scaling constant
+    K   = 0.1; % Scaling constant
     
     % Iterative Weight Solver
     % Because Takeoff Weight (W_to) drives the wing weight, and wing weight 

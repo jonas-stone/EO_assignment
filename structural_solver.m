@@ -8,7 +8,7 @@ function [stress_crit] = structural_solver(aircraft, Res, W_total, W_wing_total)
 
     % 2. Extract Q3D Spanwise Data
     Y = Res.Section.Y;   % Spanwise coordinates (m)
-    CL = Res.Section.CL; % Local lift coefficient distribution
+    CL = Res.Section.Cl; % Local lift coefficient distribution
 
     % Ensure Y and CL are row vectors for consistent matrix math
     Y = Y(:)';
