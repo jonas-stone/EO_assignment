@@ -1,4 +1,4 @@
-function [LD,stress_crit,L] = run_solver(x)
+function [LD,stress_crit,L] = run_model(x)
     c = constants();
     b2 = x(1);
     c_root = x(2);
