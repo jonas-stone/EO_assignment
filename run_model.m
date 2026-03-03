@@ -1,4 +1,4 @@
-function [LD,stress_crit,L] = run_model(x)
+function [LD,L,stress_crit] = run_model(x)
     c = constants();
     b2 = x(1);
     c_root = x(2);
@@ -20,7 +20,7 @@ function [LD,stress_crit,L] = run_model(x)
 
     % Aerodynamic Solver Run
     [Res, LD, L] = Q3D_Start_mod(aircraft,aero);
-    L = Res.CLwing*aer;
+
     if ~isnan(LD)
         % Structural Solver Run
         [stress_crit] = structural_solver(aircraft,Res,W_total,W_wing);
