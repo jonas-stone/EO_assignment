@@ -33,7 +33,11 @@ tic
 Res = Q3D_solver(AC);
 toc
 
-LD = Res.CLwing/Res.CDwing;
+if ~isnan(Res.CDwing) 
+    LD = Res.CLwing/Res.CDwing;
+else
+    LD = NaN;
+end
 
 cd("..\");
 

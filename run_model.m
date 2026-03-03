@@ -16,15 +16,16 @@ function [LD,stress_crit,L] = run_model(x)
 
     % Calculation of Flight Conditions
     [aero] = calc_atmos_properties(c.altitude,v_inf,'v',L,aircraft);
+    aero.Alpha = alpha;
 
     % Aerodynamic Solver Run
     [Res, LD] = Q3D_Start_mod(aircraft,aero);
-
-    % Structural Solver Run
-    [stress_crit] = structural_solver(aircraft,Res,W_total,W_wing);
-
-
-
-
+    
+    if ~isnan(LD)
+        % Structural Solver Run
+        [stress_crit] = structural_solver(aircraft,Res,W_total,W_wing);
+    else
+        stress_crit = NaN;
+    end
 
 end
