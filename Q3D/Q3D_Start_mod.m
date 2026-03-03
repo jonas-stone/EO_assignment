@@ -1,4 +1,4 @@
-function [Res, LD] = Q3D_Start_mod(aircraft,aero)
+function [Res, LD, L] = Q3D_Start_mod(aircraft,aero)
 
 cd("Q3D\");
 
@@ -25,8 +25,8 @@ AC.Aero.rho   = aero.rho;       % air density  (kg/m3)
 AC.Aero.alt   = aero.alt;       % flight altitude (m)
 AC.Aero.Re    = aero.Re;        % reynolds number (bqased on mean aerodynamic chord)
 AC.Aero.M     = aero.M;         % flight Mach number 
-AC.Aero.CL    = aero.CL;     % angle of attack -  comment this line to run the code for given cl 
-% AC.Aero.Alpha = aero.Alpha;     % angle of attack -  comment this line to run the code for given cl 
+% AC.Aero.CL    = aero.CL;     % angle of attack -  comment this line to run the code for given cl 
+AC.Aero.Alpha = aero.Alpha;     % angle of attack -  comment this line to run the code for given cl 
 
 %% 
 tic
@@ -35,8 +35,10 @@ toc
 
 if ~isnan(Res.CDwing) 
     LD = Res.CLwing/Res.CDwing;
+    L = Res.CLwing*1/2*aero.V^2*aero.rho*aircraft.S_ref;
 else
     LD = NaN;
+    L = NaN;
 end
 
 cd("..\");
