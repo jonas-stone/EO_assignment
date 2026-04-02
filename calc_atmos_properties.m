@@ -1,4 +1,4 @@
-function [aero] = calc_atmos_properties(h, speed_val, inputType, lift, aircraft)
+function [aero] = calc_atmos_properties(h, speed_val, inputType, aircraft)
     %{
     %% CALC ATMOS PROEPRTIES FUNCTION
     
@@ -83,7 +83,7 @@ function [aero] = calc_atmos_properties(h, speed_val, inputType, lift, aircraft)
     aero.alt = c.altitude;
     aero.Re = Re;
     aero.M = mach;
-    aero.CL = lift/(1/2 * rho * v^2 * aircraft.S);
+    
 
 
 
