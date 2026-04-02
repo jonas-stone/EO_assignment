@@ -15,7 +15,7 @@ function [LD,L,stress_crit] = run_model(x)
     aero.Alpha = alpha;
 
     % Aircraft Weight Estimation
-    [W_total,W_wing] = estimate_weight(aircraft, aero, V_inf);
+    [W_total,W_wing] = estimate_weight(aircraft, aero, v_inf);
 
     % Aerodynamic Solver Run
     [Res, LD, L] = Q3D_Start_mod(aircraft,aero);
