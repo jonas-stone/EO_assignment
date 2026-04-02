@@ -10,14 +10,13 @@ function [LD,L,stress_crit] = run_model(x)
     % Creating Aircraft Geometry
     aircraft = calc_planform(b2,c_root,c_tip,twist_tip);
 
-    % Aircraft Weight Estimation
-    [W_total,W_wing] = estimate_weight(aircraft, aero, V_inf);
-    
-
     % Calculation of Flight Conditions
     [aero] = calc_atmos_properties(c.altitude,v_inf,'v',aircraft);
     aero.Alpha = alpha;
-    % aero.CL = lift/(1/2 * rho * v^2 * aircraft.S);
+
+    % Aircraft Weight Estimation
+    [W_total,W_wing] = estimate_weight(aircraft, aero, V_inf);
+
     % Aerodynamic Solver Run
     [Res, LD, L] = Q3D_Start_mod(aircraft,aero);
     
