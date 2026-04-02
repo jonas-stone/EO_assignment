@@ -4,7 +4,7 @@ function c = constants()
 % function for the physical constants that will not change
 
 % Inputs: 
-% Outputs: c
+% Outputs:
 c = struct();
 
 %% Flight Conditions =======================================================
