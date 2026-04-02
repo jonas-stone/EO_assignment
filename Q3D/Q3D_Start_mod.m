@@ -35,7 +35,7 @@ toc
 
 if ~isnan(Res.CDwing) 
     LD = Res.CLwing/Res.CDwing;
-    L = Res.CLwing*1/2*aero.V^2*aero.rho*aircraft.S_ref;
+    L = Res.CLwing*1/2*aero.V^2*aero.rho*aircraft.S;
 else
     LD = NaN;
     L = NaN;
