@@ -28,11 +28,10 @@ c.mu0                     = 1.716e-5;    % Ref. dynamic viscosity    [Pa s]
 c.Tref                    = 273.15;      % Ref. temperature             [K]
 c.S                       = 110.4;       % Sutherland constant          [K]
 
-%% Material properties =====================================================
-c.material.E    = 6969e6;     % Young's modulus             [Pa]
-c.material.rho  = 6969;        % Density                 [kg/m^3]
-c.material.Ft_y = 6969;       % Tensile yield strength      [Pa]
-c.material.Fc_y = 6969;       % Compressive yield strength  [Pa]
-
+%% Material properties (Unidirectional Carbon Fiber / Epoxy) =================
+c.material.E    = 135e9;      % Young's modulus (Longitudinal)  [Pa]
+c.material.rho  = 1550;       % Density                         [kg/m^3]
+c.material.Ft_y = 1800e6;     % Tensile ultimate strength       [Pa]
+c.material.Fc_y = 1200e6;     % Compressive ultimate strength   [Pa]
 
 end
