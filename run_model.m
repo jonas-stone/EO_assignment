@@ -11,7 +11,7 @@ function [LD,L,stress_crit] = run_model(x)
     aircraft = calc_planform(b2,c_root,c_tip,twist_tip);
 
     % Aircraft Weight Estimation
-    [W_total,W_wing] = estimate_weight(aircraft);
+    [W_total,W_wing] = estimate_weight(aircraft, aero, V_inf);
     
 
     % Calculation of Flight Conditions

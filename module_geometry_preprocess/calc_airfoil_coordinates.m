@@ -21,5 +21,5 @@ function airfoil_coords = calc_airfoil_coordinates(Au, Al)
     % Create airfoil surface points: flipped upper surface, then lower 
     % surface
     airfoil_coords = [flipud(xz_CST_up); xz_CST_lo];
-
+    save('EMWET 1.5\airfoil_coords.dat', 'airfoil_coords', '-ascii');
 end
