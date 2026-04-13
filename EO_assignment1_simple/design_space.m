@@ -1,0 +1,197 @@
+function visualize_wing_space()
+    clear all; close all; clc;
+    
+    % Get the current folder where THIS script is saved
+    projectRoot = pwd; 
+    
+    % Add EVERYTHING in the project to the path recursively
+    addpath(genpath(projectRoot));
+    
+    % Re-verify the folders you specifically need
+    addpath(genpath("module_geometry_preprocess"));
+    addpath(genpath("Q3D"));
+    
+    fprintf('Path reset. Project Root: %s\n', projectRoot);
+    
+    %% ========================
+    %  1. SETTINGS & SWEEP RANGE
+    %  ========================
+    % Fixed Parameters (Matches your 12.5m span glider)
+    V_fixed     = 33.33; 
+    fixed_b2    = 7.5;     % 15m total span
+    fixed_twist = 0;
+    c           = constants();
+    h_cruise    = c.altitude;
+    
+    % Define the "Map" boundaries
+    res = 5; 
+    c_root_range = linspace(0.6, 1.3, res);
+    c_tip_range  = linspace(0.2, 0.6, res);
+    [ROOT, TIP] = meshgrid(c_root_range, c_tip_range);
+    
+    LD_results  = zeros(size(ROOT));
+    ALPHA_results = zeros(size(ROOT));
+    
+    %% ========================
+    %  2. THE DATA SWEEP
+    %  ========================
+    fprintf('Starting Design Space Sweep (%d points)...\n', numel(ROOT));
+    total_tic = tic;
+    
+    for i = 1:numel(ROOT)
+        cr = ROOT(i);
+        ct = TIP(i);
+        
+        % Progress report
+        fprintf('\nPoint %d/%d | Root: %.2f | Tip: %.2f ... \n', i, numel(ROOT), cr, ct);
+        
+        % Run the physics engine
+        [LD_val, a_trim, success] = trim_engine(cr, ct, fixed_b2, fixed_twist, V_fixed, h_cruise);
+        
+        if success
+            LD_results(i) = LD_val;
+            ALPHA_results(i) = a_trim;
+            fprintf('--> Success! L/D: %.2f | Alpha: %.2f\n', LD_val, a_trim);
+        else
+            LD_results(i) = NaN; % Mark unusable geometry
+            ALPHA_results(i) = NaN;
+            fprintf('--> FAILED (Stall or No Balance)\n');
+        end
+    end
+    
+    total_time = toc(total_tic);
+    fprintf('\nSweep Complete! Total time: %.1f minutes\n', total_time/60);
+    
+%% ========================
+    %  3. PLOTTING
+    %  ========================
+    
+    % Find the peak performance so we can scale the colors beautifully
+    max_LD = max(max(LD_results));
+    
+    % --- FIGURE 1: 2D Heatmap ---
+    figure('Color', 'w', 'Name', '2D Design Space');
+    contourf(ROOT, TIP, LD_results, 150, 'LineStyle', 'none'); 
+    hold on;
+    % Draw specific contour lines focused ONLY on the high-end values 
+    % (e.g., drawing lines every 0.25 L/D units from 40 up to the max)
+    custom_levels = 40:1:ceil(max_LD);
+    [C, h] = contour(ROOT, TIP, LD_results, custom_levels, 'LineColor', [0.2 0.2 0.2], 'ShowText', 'on');
+    
+    colorbar;
+    colormap(jet); 
+    
+    % --- THE MAGIC FIX ---
+    % Clamp the color scale to only show the "good" design space.
+    % Everything below an L/D of 40 will just become solid dark blue.
+    % (If using MATLAB R2021b or older, change 'clim' to 'caxis')
+    clim([35, ceil(max_LD)]); 
+    % ---------------------
+    
+    xlabel('Root Chord (m)');
+    ylabel('Tip Chord (m)');
+    title(sprintf('L/D Heatmap (Span: 15m, V: %.1f m/s)', V_fixed));
+    grid on;
+    
+    % --- FIGURE 2: 3D Surface ---
+    figure('Color', 'w', 'Name', '3D Optimization Landscape');
+    surf(ROOT, TIP, LD_results, 'FaceAlpha', 0.8);
+    shading interp;
+    lighting phong; camlight;
+    colorbar;
+    colormap(jet);
+    clim([40, ceil(max_LD)]); % Apply the exact same color clamp to the 3D plot!
+    
+    xlabel('Root Chord (m)');
+    ylabel('Tip Chord (m)');
+    zlabel('Trimmed L/D');
+    title('Aerodynamic Efficiency Landscape');
+    view(-45, 30); 
+    
+    % --- FIGURE 3: Trim Requirements ---
+    figure('Color', 'w', 'Name', 'Trim Requirements');
+    surf(ROOT, TIP, ALPHA_results);
+    xlabel('Root Chord (m)');
+    ylabel('Tip Chord (m)');
+    zlabel('Required Alpha for Trim (deg)');
+    title('How Geometry Affects Necessary Angle of Attack');
+    
+    %% Save all workspace variables
+    save('wing_design_space5.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
+    fprintf('Data saved to wing_design_space5.mat\n');
+end
+
+%% ========================
+%  INTERNAL PHYSICS ENGINE
+%  ========================
+function [best_LD, best_alpha, success] = trim_engine(c_root, c_tip, b2, twist, V, h)
+    
+    % Umbrella protection: Only pauses at the very end of the whole trim process
+    original_dir = pwd; 
+    cleanupObj = onCleanup(@() file_lock_release_engine(original_dir)); 
+    
+    % 1. Get aircraft properties and target weight
+    aircraft = calc_planform(b2, c_root, c_tip, twist);
+    aero     = calc_atmos_properties(h, V, 'v', aircraft);
+    [W_target, ~] = estimate_weight(aircraft, aero, V);
+    
+    % We will store the LD from the most recent run_model evaluation here!
+    % This saves us from having to run Q3D an extra time at the end.
+    current_LD = NaN; 
+    
+    % --- SECANT METHOD ------ %
+    a1 = 0; 
+    a2 = 3; 
+    tol_secant = 5e-3; 
+    max_iter = 15; 
+    max_safe_alpha = 7.2;
+    low_limit = -8;
+    
+    % Call your custom root-finder (The clamping acts as our capability check!)
+    [final_res, best_alpha] = secant(@(a) lift_residual(a, b2, c_root, c_tip, twist, V, W_target), a1, a2, tol_secant, max_iter, max_safe_alpha, low_limit);
+    
+    % 2. Final Verification
+    if abs(final_res) < 0.01 
+        % Grab the LD instantly from the final successful Secant loop!
+        best_LD = current_LD; 
+        success = ~isnan(best_LD);
+    else
+        success = false; best_LD = NaN; best_alpha = NaN;
+    end
+    
+    % --- NESTED RAW RESIDUAL FUNCTION ---
+    function res = lift_residual(a, b2, cr, ct, tw, V, W_t)
+        fprintf('      [Secant] Testing Alpha = %6.3f deg... ', a);
+        
+        try
+            % Notice we are grabbing LD_tmp as the first output now!
+            [LD_tmp, L_tmp, ~] = run_model([b2, cr, ct, tw, V, a]);
+            
+            % Save this LD to the parent function so we don't have to recalculate it
+            current_LD = LD_tmp;
+            
+            if isnan(L_tmp)
+                res = 1e6; 
+                fprintf('FAILED (NaN)\n');
+            else
+                % RAW ERROR
+                res = (L_tmp - W_t)/W_t; 
+                diff_pct = res * 100;
+                fprintf('Lift = %7.2f N | Target = %7.2f N | Diff = %+6.2f%%\n', L_tmp, W_t, diff_pct);
+            end
+        catch
+            res = 1e6;
+            fprintf('CRASHED\n');
+        end
+        % Return to original dir instantly (no pausing inside the loop)
+        cd(original_dir); 
+    end
+end
+
+%% ========================
+%  FILE LOCK RELEASE HELPER
+%  ========================
+function file_lock_release_engine(orig_dir)
+    cd(orig_dir);
+    pause(0.15); % Safely clears Windows Defender / OS locks just once per wing
+end

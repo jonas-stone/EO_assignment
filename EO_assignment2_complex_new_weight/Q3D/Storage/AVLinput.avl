@@ -1,0 +1,43 @@
+Wing
+# AVL input file
+
+# Mach
+0.0747481
+
+# iYsym iZsym Zsym
+0 0 0 
+# Sref Cref Bref
+31.7408 1.08367 30
+# Xref Yref Zref
+0 0 0
+
+# ==========================================================
+#                         WING 
+# ==========================================================
+SURFACE
+MainWing
+# Nchord Cspace [ Nspan Sspace ] 
+8 1.0 14 0
+# Wing is symmetrical to y=0
+YDUPLICATE
+0
+INDEX
+1
+ANGLE
+1.34331
+# ----------------------------------------------------------
+SECTION
+# Xle Yle Zle Chord Ainc
+0 0 0 1.34331 0.001
+AFILE
+AFsection1.dat
+CLAF
+1
+# ----------------------------------------------------------
+SECTION
+# Xle Yle Zle Chord Ainc
+0.000261799 15 0.000261799 0.772738 -1.27652
+AFILE
+AFsection2.dat
+CLAF
+1

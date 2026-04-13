@@ -1,0 +1,18 @@
+plop 
+g,f 
+
+load AFsection8.dat
+
+
+
+oper
+iter 400
+visc 1.17364e+06
+m 0.0747697
+pacc
+Xfout.dat
+
+cl 0.410394
+pacc
+
+quit
