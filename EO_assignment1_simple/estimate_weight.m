@@ -1,56 +1,56 @@
 function [W_total, W_wing] = estimate_weight(aircraft, aero, V_inf)
-    % ESTIMATE_WEIGHT Estimates the total aircraft weight of a sailplane.
-    %
-    % REFERENCE:
-    % Raymer, D. P. (2012). "Aircraft Design: A Conceptual Approach" (5th ed.). 
-    % American Institute of Aeronautics and Astronautics, Inc. 
-    % Chapter 15: Weights (Statistical Empirical Weight Equations).
-
-    % Aspect Ratio
-    AR = aircraft.AR; 
+    % HYBRID COMPONENT BUILD-UP WEIGHT ESTIMATION
     
-    % Taper ratio (lambda)
-    lambda = aircraft.lambda;
-
-    % Calculate the sweep angle in radians, then take the cosine
-    cos_Lambda = cosd(aircraft.LE_sweep);
+    % 1. Aircraft Geometry Extraction
+    b2 = aircraft.b2; % Semi-span
+    c_root = aircraft.wing_geom(1,4);
+    c_tip  = aircraft.wing_geom(2,4);
     
-    % Convert to Imperial Units (Raymer's equations require lbs and ft^2)
-    S_sqft = aircraft.S * 10.7639;
-
-    % Density [kg/m^3]
-    rho = aero.rho;
-
-    % Dynamic pressure at cruise lb/ft^2
-    q = (0.5 * rho * V_inf^2) * 0.0208854;
+    % Spanwise arrays for integration
+    Y = linspace(0, b2, 50); 
+    c_y = interp1([0, b2], [c_root, c_tip], Y);
     
-    % Airfoil thickness to chord ratio
-    t_c = 0.14;
+    % 2. THE SHELL MASS (Skin, Ribs, Paint, Trailing Edge)
+    % Sandwich composite shell: ~2.8 kg/m^2 per side
+    area_density_skin = 2.8; 
+    Wing_Area_Half = trapz(Y, c_y); 
+    Mass_shell_half = Wing_Area_Half * 2 * area_density_skin; 
     
-    % Ultimate load factor 
-    n_ult = 7.95; 
-
-    % Maximum take-off weight (in lbs)
-    W_max = 550*2.20462; 
-
-    % Payload and weight
-    M_payload  = 90; % Pilot + parachute (~90 kg)
-    M_non_lifting = 240; % Assumed constant empty fuselage/tail mass
+    % 3. THE STRUCTURAL MASS (Carbon Fiber Spar)
+    rho_carbon = 1600; 
     
-    % Raymer Exponents
-    k = 0.036;
-    e_1 = 0.758;
-    e_2 = 0.6;
-    e_3 = 0.006;
-    e_4 = 0.04;
-    e_5 = -0.3;
-    e_6 = 0.49;
-
-    % Mass of the wing [lb]
-    W_wing_imperial = k*((S_sqft^e_1)*((AR/(cos_Lambda^2))^e_2)*(q^e_3)*(lambda^e_4)*(((100*t_c)/cos_Lambda)^e_5)*(n_ult*W_max)^e_6);
-    W_wing = (W_wing_imperial/2.20462)*9.81;
-
-    % Total aircraft weight [N]
-    W_total = W_wing + (M_payload + M_non_lifting)*9.81;
+    % Define the spar geometry along the span
+    tc_ratio = 0.1438; 
+    t_max_y = c_y .* tc_ratio; 
+    % Realistic spar width: 10% of chord
+    box_width_y = 0.25 .* c_y; 
+    box_height_y = t_max_y .* 0.90;
+    
+    % Hardcoded spar dimensions
+    t_web = 0.003; % 3mm
+    t_cap = 0.008; % 8mm
+    
+    % Calculate cross-sectional area of the spar box at each point
+    Area_caps_y = 2 .* (box_width_y .* t_cap);
+    Area_webs_y = 2 .* ((box_height_y - 2*t_cap) .* t_web);
+    Area_total_spar_y = Area_caps_y + Area_webs_y;
+    
+    % Integrate Volume along the span and multiply by density
+    Volume_spar_half = trapz(Y, Area_total_spar_y);
+    Mass_spar_half = Volume_spar_half * rho_carbon;
+    
+    % 4. Total Wing Weight
+    Mass_wing_half = Mass_shell_half + Mass_spar_half;
+    W_wing = (Mass_wing_half * 2) * 9.81; % Total wing weight in Newtons
+    
+    % 5. Non-Lifting Mass (Fuselage, Tail, Pilot)
+    M_payload = 90; % Pilot
+    M_fuselage_tail = 150; % Realistic empty fuselage/tail mass
+    
+    % 6. Water Ballast
+    W_water = 0; % Set to 0 for dry flight
+    
+    % 7. Final Total Weight
+    W_total = W_wing + (M_payload + M_fuselage_tail)*9.81 + W_water;
 
 end

@@ -1,18 +1,18 @@
 plop 
 g,f 
 
-load AFsection4.dat
+load AFsection3.dat
 
 
 
 oper
 iter 400
-visc 1.59211e+06
-m 0.12472
+visc 2.55819e+06
+m 0.0829902
 pacc
 Xfout.dat
 
-cseq 1.05431 1.45431 0.05
+cseq 0.748959 1.14896 0.05
 pacc
 
 quit

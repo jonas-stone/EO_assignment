@@ -34,8 +34,22 @@ Res = Q3D_solver(AC);
 toc
 
 if ~isnan(Res.CDwing) 
-    LD = Res.CLwing/Res.CDwing;
-    L = Res.CLwing*1/2*aero.V^2*aero.rho*aircraft.S;
+    % --- NEW: ADD FUSELAGE & TAIL DRAG ---
+    % Equivalent parasite area of a modern sailplane fuselage & tail (m^2)
+    f_area = 0.05; 
+    
+    % Convert parasite area to a Drag Coefficient based on the current wing area
+    CD_fuse_tail = f_area / aircraft.S; 
+    
+    % Sum the wing drag and the non-lifting drag
+    Total_CD = Res.CDwing + CD_fuse_tail;
+    
+    % Calculate true Aircraft L/D
+    LD = Res.CLwing / Total_CD;
+    
+    % Lift force calculation (remains unchanged, using CLwing)
+    L = Res.CLwing * 1/2 * aero.V^2 * aero.rho * aircraft.S;
+    % -------------------------------------
 else
     LD = NaN;
     L = NaN;

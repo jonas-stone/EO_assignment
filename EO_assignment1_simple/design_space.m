@@ -17,7 +17,7 @@ function visualize_wing_space()
     %  1. SETTINGS & SWEEP RANGE
     %  ========================
     % Fixed Parameters (Matches your 12.5m span glider)
-    V_fixed     = 33.33; 
+    V_fixed     = 27.78; 
     fixed_b2    = 7.5;     % 15m total span
     fixed_twist = 0;
     c           = constants();
@@ -25,8 +25,8 @@ function visualize_wing_space()
     
     % Define the "Map" boundaries
     res = 5; 
-    c_root_range = linspace(0.6, 1.3, res);
-    c_tip_range  = linspace(0.2, 0.6, res);
+    c_root_range = linspace(0.8, 2, res);
+    c_tip_range  = linspace(0.2, 0.8, res);
     [ROOT, TIP] = meshgrid(c_root_range, c_tip_range);
     
     LD_results  = zeros(size(ROOT));
@@ -117,8 +117,7 @@ function visualize_wing_space()
     title('How Geometry Affects Necessary Angle of Attack');
     
     %% Save all workspace variables
-    save('wing_design_space5.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
-    fprintf('Data saved to wing_design_space5.mat\n');
+    save('wing_design_space_good2.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
 end
 
 %% ========================
@@ -133,7 +132,7 @@ function [best_LD, best_alpha, success] = trim_engine(c_root, c_tip, b2, twist, 
     % 1. Get aircraft properties and target weight
     aircraft = calc_planform(b2, c_root, c_tip, twist);
     aero     = calc_atmos_properties(h, V, 'v', aircraft);
-    [W_target, ~] = estimate_weight(aircraft, aero, V);
+    [W_target, W_wing] = estimate_weight(aircraft, aero, V);
     
     % We will store the LD from the most recent run_model evaluation here!
     % This saves us from having to run Q3D an extra time at the end.
@@ -144,7 +143,7 @@ function [best_LD, best_alpha, success] = trim_engine(c_root, c_tip, b2, twist, 
     a2 = 3; 
     tol_secant = 5e-3; 
     max_iter = 15; 
-    max_safe_alpha = 7.2;
+    max_safe_alpha = 6;
     low_limit = -8;
     
     % Call your custom root-finder (The clamping acts as our capability check!)
