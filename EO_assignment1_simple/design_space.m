@@ -25,7 +25,7 @@ function visualize_wing_space()
     
     % Define the "Map" boundaries
     res = 10; 
-    c_root_range = linspace(0.3, 1.5, res);
+    c_root_range = linspace(0.4, 2, res);
     c_tip_range  = linspace(0.2, 0.8, res);
     [ROOT, TIP] = meshgrid(c_root_range, c_tip_range);
     
@@ -117,8 +117,8 @@ function visualize_wing_space()
     title('How Geometry Affects Necessary Angle of Attack');
     
     %% Save all workspace variables
-    save('wing_design_space5.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
-    fprintf('Data saved to wing_design_space5.mat\n');
+    save('wing_design_space_good2778.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
+    fprintf('Data saved to wing_design_space_good_2778.mat\n');
 end
 
 %% ========================
