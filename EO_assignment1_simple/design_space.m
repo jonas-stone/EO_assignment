@@ -17,15 +17,15 @@ function visualize_wing_space()
     %  1. SETTINGS & SWEEP RANGE
     %  ========================
     % Fixed Parameters (Matches your 12.5m span glider)
-    V_fixed     = 27.78; 
+    V_fixed     = 30.55; 
     fixed_b2    = 7.5;     % 15m total span
     fixed_twist = 0;
     c           = constants();
     h_cruise    = c.altitude;
     
     % Define the "Map" boundaries
-    res = 5; 
-    c_root_range = linspace(0.8, 2, res);
+    res = 10; 
+    c_root_range = linspace(0.3, 1.5, res);
     c_tip_range  = linspace(0.2, 0.8, res);
     [ROOT, TIP] = meshgrid(c_root_range, c_tip_range);
     
@@ -66,8 +66,9 @@ function visualize_wing_space()
     %  3. PLOTTING
     %  ========================
     
-    % Find the peak performance so we can scale the colors beautifully
-    max_LD = max(max(LD_results));
+    % Find the peak performance so we can scale the colors beautifull
+    max_LD = max(LD_results(~isnan(LD_results)));
+    min_LD = min(LD_results(~isnan(LD_results)));
     
     % --- FIGURE 1: 2D Heatmap ---
     figure('Color', 'w', 'Name', '2D Design Space');
@@ -75,7 +76,7 @@ function visualize_wing_space()
     hold on;
     % Draw specific contour lines focused ONLY on the high-end values 
     % (e.g., drawing lines every 0.25 L/D units from 40 up to the max)
-    custom_levels = 40:1:ceil(max_LD);
+    custom_levels = floor(min_LD):1:ceil(max_LD);
     [C, h] = contour(ROOT, TIP, LD_results, custom_levels, 'LineColor', [0.2 0.2 0.2], 'ShowText', 'on');
     
     colorbar;
@@ -84,8 +85,7 @@ function visualize_wing_space()
     % --- THE MAGIC FIX ---
     % Clamp the color scale to only show the "good" design space.
     % Everything below an L/D of 40 will just become solid dark blue.
-    % (If using MATLAB R2021b or older, change 'clim' to 'caxis')
-    clim([35, ceil(max_LD)]); 
+    clim([min_LD, max_LD]);
     % ---------------------
     
     xlabel('Root Chord (m)');
@@ -100,7 +100,7 @@ function visualize_wing_space()
     lighting phong; camlight;
     colorbar;
     colormap(jet);
-    clim([40, ceil(max_LD)]); % Apply the exact same color clamp to the 3D plot!
+    clim([min_LD, max_LD]); % Apply the exact same color clamp to the 3D plot!
     
     xlabel('Root Chord (m)');
     ylabel('Tip Chord (m)');
@@ -117,7 +117,8 @@ function visualize_wing_space()
     title('How Geometry Affects Necessary Angle of Attack');
     
     %% Save all workspace variables
-    save('wing_design_space_good2.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
+    save('wing_design_space5.mat', 'ROOT', 'TIP', 'LD_results', 'ALPHA_results', 'V_fixed');
+    fprintf('Data saved to wing_design_space5.mat\n');
 end
 
 %% ========================
