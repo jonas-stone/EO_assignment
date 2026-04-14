@@ -14,7 +14,7 @@ function main()
     %  ========================
     % Variables: [c_root, c_tip]
     x_0 = [1.5, 0.75]; 
-    lb  = [0.8, 0.2];
+    lb  = [0.4, 0.2];
     ub  = [2.0, 0.8];
     max_iterations = 60; 
         
@@ -24,7 +24,7 @@ function main()
     fprintf('\n--- Starting Nelder-Mead Simplex Optimization ---\n');
     
     % Calling your simplex.m file
-    tol_simplex = 1e-4;
+    tol_simplex = 1e-5;
     [c_root_opt, c_tip_opt] = simplex(@obj_fun, x_0, ub, lb, max_iterations, tol_simplex);
 
     fprintf('\n======================================================\n');
@@ -51,10 +51,10 @@ function main()
         % --- SECANT METHOD ------ %
         a1 = 0; 
         a2 = 3; 
-        tol_secant = 5e-3; 
+        tol_secant = 1e-3; 
         max_iter = 15; 
-        max_limit = 7.2;
-        low_limit = -4;
+        max_limit = 6;
+        low_limit = -8;
         
         % Call your custom root-finder
         [final_res, best_alpha] = secant(@(a) lift_residual(a, b2, c_root, c_tip, twist, V, W_target), a1, a2, tol_secant, max_iter, max_limit, low_limit);
@@ -108,7 +108,7 @@ function main()
         ct = x_bar(2);
         
         % Glider Flight Constants
-        V_fixed     = 27.78; 
+        V_fixed     = 30.55; 
         fixed_b2    = 7.5;     
         fixed_twist = 0;
         h_cruise    = 1500; % Matches your previous constants
