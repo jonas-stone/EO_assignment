@@ -1,4 +1,4 @@
-function [c_root_best, c_tip_best] = simplex(fun, x0, ub, lb, max_iter, tol)
+function [c_root_best, c_tip_best] = simplex(fun, x0, ub, lb, max_iter, tol_f, tol_x)
     simplex_points = 3;
     F = zeros(simplex_points, 1);
     X = zeros(simplex_points, 2);
@@ -24,7 +24,8 @@ function [c_root_best, c_tip_best] = simplex(fun, x0, ub, lb, max_iter, tol)
 
         f_dist = max(F) - min(F);
         x_dist = max([norm(X(1,:) - X(2,:)), norm(X(1,:) - X(3,:))]);
-        if f_dist < tol && x_dist < tol
+        
+        if f_dist < tol_f && x_dist < tol_x
             fprintf('Convergence reached at iteration %d!\n', iter);
         break; % This exits the for-loop immediately
         end

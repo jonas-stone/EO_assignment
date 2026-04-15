@@ -14,7 +14,7 @@ function [x_opt, fval] = main()
     % Define these exactly ONCE so physics always match
     c_const     = constants();
     h_cruise    = c_const.altitude;
-    V_fixed     = 33.33;   % Kept at 27.78 for both objective and constraint!
+    V_fixed     = 30.55;  
     fixed_b2    = 7.5;     % 15m total span
     fixed_twist = 0;
 
@@ -22,8 +22,8 @@ function [x_opt, fval] = main()
     %  INITIAL POINT & BOUNDS 
     %  ========================
     % Variables: [c_root, c_tip, alpha]
-    x_0 = [1.5,  0.75,  2.0]; 
-    lb  = [0.3,  0.2,  -4.0]; 
+    x_0 = [1.5,  0.75,  0.0]; 
+    lb  = [0.4,  0.2,  -4.0]; 
     ub  = [2.0,  0.8,   6.0]; 
         
     %% ========================
