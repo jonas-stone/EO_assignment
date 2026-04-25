@@ -30,8 +30,8 @@ function main()
     %  ========================
     fprintf('\n--- Starting Nelder-Mead Simplex Optimization ---\n');
     
-    tol_f = 1e-2;
-    tol_x = 1e-3;
+    tol_f = 1e-4;
+    tol_x = 1e-4;
     [c_root_opt, c_tip_opt] = simplex(@obj_fun, x_0, ub, lb, max_iterations, tol_f, tol_x);
     
     fprintf('\n======================================================\n');
@@ -42,52 +42,12 @@ function main()
     % Adjusted to 4 decimal places
     fprintf('Optimal Geometry : c_root = %5.4f | c_tip = %5.4f\n', c_root_opt, c_tip_opt);
     disp(history); 
-    
-    % =========================================================================
-    % EXTRACT SPANWISE LIFT DISTRIBUTIONS (BASELINE VS OPTIMIZED)
-    % =========================================================================
-    fprintf('Extracting spanwise data for Baseline and Optimized wings...\n');
-    
-    % Constants used in your obj_fun
-    V_fixed = 30.55; fixed_b2 = 7.5; fixed_twist = 0; h_cruise = 1500;
-    
-    % Setup dummy aircraft and aero structs to get local atmospheric properties
-    aircraft_dummy = calc_planform(fixed_b2, c_root_opt, c_tip_opt, fixed_twist);
-    aero_dummy     = calc_atmos_properties(h_cruise, V_fixed, 'v', aircraft_dummy);
-    
-    % Get dynamic pressure for dimensional lift (N/m) using local aero struct
-    q_inf = 0.5 * aero_dummy.rho * V_fixed^2;
-    
-    % --- A. BASELINE WING (Trimmed at Iteration 0) ---
-    c_root_base = x_0(1);
-    c_tip_base  = x_0(2);
-    alpha_base  = history.Alpha(1); % Grabs the trimmed alpha found on step 1
-    
-    [~, ~, base_Res] = run_model([fixed_b2, c_root_base, c_tip_base, fixed_twist, V_fixed, alpha_base]);
-    Y_base   = base_Res.Section.Y(:)'; 
-    Cl_base  = base_Res.Section.Cl(:)';
-    cy_base  = interp1([0, fixed_b2], [c_root_base, c_tip_base], Y_base);
-    L_base   = q_inf .* cy_base .* Cl_base; % Dimensional Lift in N/m
-    
-    % --- B. OPTIMIZED WING (Trimmed at Final Iteration) ---
-    alpha_opt = history.Alpha(end);
-    
-    [~, ~, opt_Res] = run_model([fixed_b2, c_root_opt, c_tip_opt, fixed_twist, V_fixed, alpha_opt]);
-    Y_opt   = opt_Res.Section.Y(:)'; 
-    Cl_opt  = opt_Res.Section.Cl(:)';
-    cy_opt  = interp1([0, fixed_b2], [c_root_opt, c_tip_opt], Y_opt);
-    L_opt   = q_inf .* cy_opt .* Cl_opt; % Dimensional Lift in N/m
-    
-    % --- C. TARGET WEIGHT (For Elliptical Math) ---
-    % Reuse the dummy structs created above
-    [W_target, ~]  = estimate_weight(aircraft_dummy, aero_dummy, V_fixed);
-    
+       
     % --- SAVE EVERYTHING TO .MAT FILE ---
     timestamp = datestr(now, 'yyyy-mm-dd_HHMM');
     filename = ['opt_history_', timestamp, '.mat'];
     
-    save(filename, 'history', 'c_root_opt', 'c_tip_opt', 'total_aero_calls', ...
-                   'Y_base', 'L_base', 'Y_opt', 'L_opt', 'W_target');
+    save(filename, 'history', 'c_root_opt', 'c_tip_opt', 'total_aero_calls');
                    
     fprintf('History and spanwise data saved to: %s\n', filename);
     fprintf('======================================================\n\n');

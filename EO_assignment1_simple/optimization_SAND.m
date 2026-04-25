@@ -1,120 +1,142 @@
-function [x_opt, fval] = main()
+function [x_opt, fval, eval_history, iter_history] = main()
     close all; clc;
     
-    % Get the current folder where THIS script is saved
+    % --- Setup Paths ---
     projectRoot = pwd; 
     addpath(genpath(projectRoot));
     addpath(genpath("module_geometry_preprocess"));
     addpath(genpath("Q3D"));
-    fprintf('Path reset. Project Root: %s\n', projectRoot);
     
     %% ========================
-    %  GLOBAL CONSTANTS (Shared with nested functions)
+    %  1. SHARED DATA & HISTORY
     %  ========================
-    % Define these exactly ONCE so physics always match
+    % Constants
     c_const     = constants();
     h_cruise    = c_const.altitude;
     V_fixed     = 30.55;  
-    fixed_b2    = 7.5;     % 15m total span
+    fixed_b2    = 7.5;     
     fixed_twist = 0;
 
+    % Global Counters & Tables
+    eval_count = 0;
+    eval_history = table([], [], [], [], [], [], 'VariableNames', ...
+                   {'EvalNum', 'L_D', 'RootChord', 'TipChord', 'Error_Pct', 'Alpha'});
+               
+    iter_history = table([], [], [], [], [], [], 'VariableNames', ...
+                   {'Iteration', 'L_D', 'RootChord', 'TipChord', 'Error_Pct', 'Alpha'});
+
+    % Initialize Cache Memory
+    cache.x    = NaN(1, 3); % [c_root, c_tip, alpha]
+    cache.LD   = NaN;
+    cache.L    = NaN;
+    cache.W    = NaN;
+    cache.err  = NaN;
+
     %% ========================
-    %  INITIAL POINT & BOUNDS 
+    %  2. OPTIMIZATION SETTINGS
     %  ========================
-    % Variables: [c_root, c_tip, alpha]
-    x_0 = [1.5,  0.75,  0.0]; 
+    x_0 = [0.8,  0.4,  0.0]; 
     lb  = [0.4,  0.2,  -4.0]; 
     ub  = [2.0,  0.8,   6.0]; 
-        
-    %% ========================
-    %  OPTIMIZATION SETUP
-    %  ========================
+
     options = optimoptions('fmincon', ...
         'Algorithm',            'sqp', ...
         'Display',              'iter', ...
         'FiniteDifferenceStepSize', 1e-2, ...
-        'ConstraintTolerance',  5e-3, ...
+        'ConstraintTolerance',  1e-3, ...
         'OutputFcn',            @my_output_fun, ...
         'MaxIterations',        100, ...
         'MaxFunctionEvaluations', 1000, ...
         'StepTolerance',        1e-4, ...
-        'OptimalityTolerance',  1e-5);
+        'FunctionTolerance',    1e-4);
         
     %% ========================
-    %  RUN FMINCON
+    %  3. RUN FMINCON
     %  ========================
-    fprintf('\n--- Starting SAND optimization ---\n');
+    fprintf('\n--- Starting Cached SQP Optimization ---\n');
     [x_opt, fval] = fmincon(@obj_fun, x_0, [], [], [], [], lb, ub, @nonlcon_fun, options);
     
-    %% ========================
-    %  FMINCON OBJECTIVE FUNCTION
-    %  ========================
-    function f = obj_fun(x_bar)
-        c_root = x_bar(1);
-        c_tip  = x_bar(2);
-        alpha  = x_bar(3); 
+    % Final Console Report
+    fprintf('\n======================================================\n');
+    fprintf('OPTIMIZATION COMPLETED\n');
+    fprintf('Total Function Evaluations (Aero Calls): %d\n', eval_count);
+    fprintf('Optimal Geometry : c_root = %5.4f | c_tip = %5.4f | alpha = %5.2f\n', x_opt(1), x_opt(2), x_opt(3));
     
-        original_dir = pwd; 
-        cleanupObj = onCleanup(@() cd(original_dir));
-        
-        try
-            [LD_raw, ~, ~] = run_model([fixed_b2, c_root, c_tip, fixed_twist, V_fixed, alpha]);
-            f = -LD_raw;
-        catch
-            % PENALTY: Do not use NaN. 1000 acts as an L/D of -1000 (Terrible)
-            f = 1000; 
-        end
-    end
+    % Save data
+    timestamp = datestr(now, 'yyyy-mm-dd_HHMM');
+    save(['fmincon_results_', timestamp, '.mat'], 'eval_history', 'iter_history', 'x_opt');
+    fprintf('Full history saved to .mat file.\n');
 
     %% ========================
-    %  FMINCON NONLINEAR CONSTRAINT (L = W +/- 0.5%)
+    %  4. THE CACHE ENGINE
     %  ========================
-    function [c, ceq] = nonlcon_fun(x_bar)
-        % fmincon MUST receive two outputs!
-        c = []; % No inequality constraints
+    function update_cache(x)
+        % Check if we already have this point in memory
+        if norm(x - cache.x) < 1e-10
+            return; 
+        end
         
-        c_root = x_bar(1);
-        c_tip  = x_bar(2);
-        alpha  = x_bar(3);
+        cr = x(1); ct = x(2); alpha = x(3);
         
-        original_dir = pwd; 
-        cleanupObj = onCleanup(@() cd(original_dir));
-        
-        % 1. Calculate Target Weight for this geometry
-        aircraft = calc_planform(fixed_b2, c_root, c_tip, fixed_twist);
+        % 1. Calculate Target Weight for this specific geometry
+        aircraft = calc_planform(fixed_b2, cr, ct, fixed_twist);
         aero     = calc_atmos_properties(h_cruise, V_fixed, 'v', aircraft);
         [W_target, ~] = estimate_weight(aircraft, aero, V_fixed);
         
-        % 2. Calculate Actual Lift at the guessed alpha
+        original_dir = pwd; 
+        cleanupObj = onCleanup(@() cd(original_dir));
+        
         try
-            [~, L_tmp, ~] = run_model([fixed_b2, c_root, c_tip, fixed_twist, V_fixed, alpha]);
+            % 2. Run Aero Model
+            [LD_raw, L_tmp, ~] = run_model([fixed_b2, cr, ct, fixed_twist, V_fixed, alpha]);
             
-            % Raw fractional error
-            err = (L_tmp - W_target) / W_target; 
-            ceq = err;
+            % 3. Update Cache
+            cache.x   = x;
+            cache.LD  = LD_raw;
+            cache.L   = L_tmp;
+            cache.W   = W_target;
+            cache.err = (L_tmp - W_target) / W_target;
             
-            fprintf('    Alpha: %5.2f | Raw L_tmp: %8.2f | Target W: %8.2f | Err: %+6.2f%%\n', ...
-                    alpha, L_tmp, W_target, err*100);
         catch
-            % PENALTY: Massive constraint violation if it crashes
-            ceq = 1e6;
-            fprintf('    Alpha: %5.2f | Raw L_tmp:  CRASHED | Target W: %8.2f\n', alpha, W_target);
+            % Failure Penalty
+            cache.x   = x;
+            cache.LD  = -1e6; 
+            cache.L   = 0;
+            cache.err = 1e6;
         end
+        
+        % 4. Record every single evaluation (Gradients + Steps)
+        eval_count = eval_count + 1;
+        new_eval = {eval_count, cache.LD, cr, ct, cache.err * 100, alpha};
+        eval_history = [eval_history; new_eval];
     end
 
     %% ========================
-    %  CUSTOM OUTPUT FUNCTION
+    %  5. OBJ & CONSTRAINTS
+    %  ========================
+    function f = obj_fun(x)
+        update_cache(x);
+        f = -cache.LD;
+    end
+
+    function [c, ceq] = nonlcon_fun(x)
+        update_cache(x);
+        c   = []; 
+        ceq = cache.err; % Equality constraint: L - W = 0
+    end
+
+    %% ========================
+    %  6. OUTPUT FUNCTION (Iterations)
     %  ========================
     function stop = my_output_fun(x, optimValues, state)
         stop = false; 
-        
         if isequal(state, 'iter')
-            fprintf('\n======================================================\n');
-            fprintf('ITERATION %d COMPLETED\n', optimValues.iteration);
-            fprintf('Current Best L/D : %6.2f\n', -optimValues.fval); 
-            fprintf('Current Geometry : c_root = %5.3f | c_tip = %5.3f | alpha = %5.2f deg\n', x(1), x(2), x(3));
-            fprintf('Constraint Violation : %6.4f\n', optimValues.constrviolation);
-            fprintf('======================================================\n\n');
+            % When fmincon takes a step, record it
+            new_iter = {optimValues.iteration, -optimValues.fval, x(1), x(2), cache.err * 100, x(3)};
+            iter_history = [iter_history; new_iter];
+            
+            fprintf('  [ITER %d] L/D: %6.3f | Chord: %5.3f/%5.3f | Alpha: %5.2f | Err: %+6.3f%%\n', ...
+                    optimValues.iteration, -optimValues.fval, x(1), x(2), x(3), cache.err*100);
         end
     end
 end
