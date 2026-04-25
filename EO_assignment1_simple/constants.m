@@ -1,11 +1,15 @@
 function c = constants()
+c = struct();
+%% Baseline Normalization
+% Baseline design point: [c_root, c_tip, alpha, V, twist]
+c.x_baseline = [1.5, 0.75, 0.4058, 30.55, 1];
 
 %% CONSTANTS
 % function for the physical constants that will not change
 
 % Inputs: 
 % Outputs:
-c = struct();
+
 
 %% Flight Conditions =======================================================
 c.altitude = 1500;                       % Flying altitude              [m]
@@ -33,5 +37,7 @@ c.material.E    = 135e9;      % Young's modulus (Longitudinal)  [Pa]
 c.material.rho  = 1550;       % Density                         [kg/m^3]
 c.material.Ft_y = 1800e6;     % Tensile ultimate strength       [Pa]
 c.material.Fc_y = 1200e6;     % Compressive ultimate strength   [Pa]
+
+
 
 end

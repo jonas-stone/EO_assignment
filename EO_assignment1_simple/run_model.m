@@ -1,6 +1,7 @@
 function [LD, L, stress_crit] = run_model(x)
     c = constants();
-    
+    %x = x.*c.x_baseline;
+
     % Your original 6 design variables
     b2 = x(1);
     c_root = x(2);
