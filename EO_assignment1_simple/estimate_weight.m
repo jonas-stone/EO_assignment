@@ -1,4 +1,4 @@
-function [W_total, W_wing] = estimate_weight(aircraft, aero, V_inf)
+function [W_total, W_wing] = estimate_weight(aircraft, aero, V)
     % HYBRID COMPONENT BUILD-UP WEIGHT ESTIMATION
     
     % 1. Aircraft Geometry Extraction

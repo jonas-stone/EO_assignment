@@ -7,7 +7,7 @@ cd("Q3D\");
 AC.Wing.Geom = aircraft.wing_geom;
 
 % Wing incidence angle (degree)
-AC.Wing.inc  = aircraft.wing_geom(1,4);
+AC.Wing.inc  = aircraft.wing_geom(1,5);
 
 % Airfoil coefficients input matrix
 AC.Wing.Airfoils   = aircraft.airfoils;
