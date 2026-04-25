@@ -1,0 +1,18 @@
+plop 
+g,f 
+
+load AFsection1.dat
+
+
+
+oper
+iter 400
+visc 1.19183e+06
+m 0.0913457
+pacc
+Xfout.dat
+
+cl 1.04438
+pacc
+
+quit

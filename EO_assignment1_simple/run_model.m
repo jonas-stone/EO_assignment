@@ -23,23 +23,23 @@ function [LD, L, stress_crit] = run_model(x)
     % --- WATER BALLAST LOGIC (re-enabled) ---
     % MTOW based on EASA TCDS Nimbus-4M limit (800 kg)
     % FIX: convert kg to Newtons for unit consistency with estimate_weight outputs
-    W_MTOW = 800 * c.g;
+    W_MTOW = 800;
     
-    % Available water ballast is whatever weight is left over
-    W_water_total = W_MTOW - W_total_empty; 
-    if W_water_total < 0
-        W_water_total = 0; % Prevent negative water if the wing gets too heavy
-        W_MTOW = W_total_empty; 
-    end
+    % % Available water ballast is whatever weight is left over
+    % W_water_total = W_MTOW - W_total_empty; 
+    % if W_water_total < 0
+    %     W_water_total = 0; % Prevent negative water if the wing gets too heavy
+    %     W_MTOW = W_total_empty; 
+    % end
     
     % Aerodynamic Solver Run
-    [Res, LD, L] = Q3D_Start_mod(aircraft, aero);
+    [~, LD, L] = Q3D_Start_mod(aircraft, aero); % [Res, LD, L]
     
-    % Structural Solver Run (re-enabled)
-    % We pass W_MTOW because the worst-case structural load is at max weight
-    if ~isnan(LD)
-        [stress_crit] = structural_solver(aircraft, Res, W_MTOW, W_wing, W_water_total);
-    else
-        stress_crit = NaN;
-    end
+    % % Structural Solver Run (re-enabled)
+    % % We pass W_MTOW because the worst-case structural load is at max weight
+    % if ~isnan(LD)
+    %     [stress_crit] = structural_solver(aircraft, Res, W_MTOW, W_wing, W_water_total);
+    % else
+    stress_crit = NaN;
+    % end
 end
