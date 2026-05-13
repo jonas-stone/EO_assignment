@@ -40,22 +40,23 @@ fprintf('=== Numerical Noise Check (fmincon FD scale) ===\n\n');
 
 figure('Name', 'Noise Check — L/D',     'Position', [50  50  1400 700]);
 figure('Name', 'Noise Check — Trim Error', 'Position', [100 100 1400 700]);
-
+% Baseline design point: [c_root, c_tip, alpha, V, twist]
+delta = [1e-1,1e-1,5e-1,5e-2,1];
 for v = 1:5
     x_nominal = x_base(v);
-    delta = 10^-6;%sqrt(eps) * max(1, abs(x_nominal)); % fmincon's actual FD step
-    sweep = linspace(x_nominal - delta, x_nominal + delta, n_pts);
+    %delta = 5e-1;%sqrt(eps) * max(1, abs(x_nominal)); % fmincon's actual FD step
+    sweep = linspace(x_nominal - delta(v), x_nominal + delta(v), n_pts);
     
     LD_vec = zeros(1, n_pts);
     LW_err = zeros(1, n_pts);
     
     fprintf('Variable %d: %-12s | nominal = %8.4f | delta = %.2e\n', ...
-            v, var_names{v}, x_nominal, delta);
+            v, var_names{v}, x_nominal, delta(v));
     
     for i = 1:n_pts
         x_test = x_base;
         x_test(v) = sweep(i);                        % perturb in normalized space
-        x_phys = x_test .* c_const.x_baseline;       % denormalize ALL 5 variables
+        x_phys = x_test.*c_const.x_baseline;       % denormalize ALL 5 variables
     
         aircraft = calc_planform(semi_span, x_phys(1), x_phys(2), x_phys(5));
         aero = calc_atmos_properties(c_const.altitude, x_phys(4), 'v', aircraft);
@@ -75,14 +76,14 @@ for v = 1:5
     % --- L/D ---
     figure(1);
     subplot(2, 3, v);
-    plot(sweep, LD_vec, '-o', 'MarkerSize', 2, 'LineWidth', 1);
+    plot(sweep*c_const.x_baseline(v), LD_vec, '-o', 'MarkerSize', 2, 'LineWidth', 1);
     xlabel(var_names{v}); ylabel('L/D'); grid on;
-    title(sprintf('L/D vs %s  (\\Delta = %.1e)', var_names{v}, delta));
+    title(sprintf('L/D vs %s  (\\Delta = %.1e)', var_names{v}, delta(v)));
     
     % --- Trim error ---
     figure(2);
     subplot(2, 3, v);
-    plot(sweep, LW_err, '-o', 'MarkerSize', 2, 'LineWidth', 1);
+    plot(sweep*c_const.x_baseline(v), LW_err, '-o', 'MarkerSize', 2, 'LineWidth', 1);
     xlabel(var_names{v}); ylabel('(L-W)/W'); grid on;
     title(sprintf('Trim Error vs %s', var_names{v}));
 end
